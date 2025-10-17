@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 
 function Login() {
@@ -20,19 +20,19 @@ function Login() {
     setErrors({});
 
     try {
-      // Enviamos los datos del formulario al endpoint de login.
       const response = await axios.post('http://127.0.0.1:8000/api/login', formData);
       
-      // ¡Paso clave! Si el login es exitoso, guardamos el token de acceso.
       localStorage.setItem('auth_token', response.data.access_token);
       
-      setMessage('¡Login exitoso! Redirigiendo...');
-      // En un futuro, aquí redirigiremos a la página principal.
-      // window.location.href = '/dashboard';
+      setMessage('¡Login exitoso! Bienvenidos a Finnantech...');
+      
+      // ¡CAMBIO AQUÍ! Redirigimos al usuario a la página del dashboard.
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1500); // Esperamos 1.5 segundos para que el usuario lea el mensaje.
 
     } catch (error) {
       if (error.response && error.response.status === 422) {
-        // Maneja errores de validación (ej: contraseña incorrecta).
         setErrors(error.response.data.errors);
       } else {
         setMessage('Ocurrió un error al iniciar sesión.');
