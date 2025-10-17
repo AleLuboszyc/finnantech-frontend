@@ -1,0 +1,87 @@
+/* src/components/Saldos.css */
+
+.saldos-container {
+    max-width: 800px;
+    margin: 2rem auto;
+}
+
+.saldos-card {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.saldos-list {
+    margin-bottom: 2rem;
+}
+
+.saldo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.saldo-item:last-child {
+    border-bottom: none;
+}
+
+.saldo-item .moneda {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.saldo-item .cantidad {
+    font-size: 1.2rem;
+    color: #007bff; /* Azul Finnantech */
+    font-weight: 500;
+}
+
+.saldo-item-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #777;
+}
+
+.cargar-saldo-btn {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cargar-saldo-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Estilo para el botón deshabilitado */
+.cargar-saldo-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Mensajes (reutilizados de Perfil.css) */
+.error-message {
+    color: red;
+    background: #ffe0e0;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.success-message {
+    color: green;
+    background: #e0ffe0;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}

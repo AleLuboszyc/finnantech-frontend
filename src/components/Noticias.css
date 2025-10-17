@@ -1,0 +1,77 @@
+/* Estilos para el contenedor principal de la página de Noticias */
+.noticias-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.noticias-container h2 {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+}
+
+/* Estilos para la lista de noticias */
+.noticias-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Espacio entre las tarjetas de noticias */
+}
+
+/* Estilos para cada tarjeta de noticia */
+.noticia-card {
+    display: flex;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    background-color: #fff;
+    transition: box-shadow 0.3s;
+}
+
+.noticia-card:hover {
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para la imagen de la noticia */
+.noticia-imagen {
+    width: 300px; /* Ancho fijo para la imagen */
+    height: auto;
+    object-fit: cover;
+}
+
+/* Estilos para el contenido de texto */
+.noticia-contenido {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.noticia-contenido h3 {
+    font-size: 20px;
+    color: #0f172a;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.noticia-resumen {
+    color: #64748b;
+    margin-bottom: 1rem;
+}
+
+.noticia-meta {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+/* Estilo para mensajes de error */
+.error-message {
+    color: #dc2626;
+    background-color: #fee2e2;
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 2rem auto;
+    max-width: 1000px;
+}

@@ -1,126 +1,128 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// src/components/Perfil.js
 
-const styles = {
-    title: {
-        fontSize: '28px',
-        fontWeight: 'bold',
-        color: '#1e293b',
-        marginBottom: '30px',
-    },
-    card: {
-        backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        padding: '30px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-        maxWidth: '700px', 
-    },
-    profileHeader: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '30px',
-        paddingBottom: '20px',
-        borderBottom: '1px solid #f1f5f9',
-    },
-    avatar: {
-        width: '80px',
-        height: '80px',
-        borderRadius: '50%',
-        backgroundColor: '#303f9f', 
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '36px',
-        fontWeight: 'bold',
-        marginRight: '20px',
-    },
-    userInfo: {
-        lineHeight: '1.4',
-    },
-    userName: {
-        fontSize: '22px',
-        fontWeight: 'bold',
-        color: '#1e293b',
-        margin: 0,
-    },
-    userEmail: {
-        fontSize: '16px',
-        color: '#64748b',
-        margin: 0,
-    },
-    sectionTitle: {
-        fontSize: '18px',
-        fontWeight: '600',
-        color: '#64748b',
-        marginTop: '30px',
-        marginBottom: '15px',
-    },
-    infoRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        fontSize: '16px',
-        padding: '10px 0',
-    },
-};
+import React, { useState, useEffect } from 'react';
+import authService from '../services/authService';
+import './Perfil.css'; // Crearemos este archivo para los estilos
 
 const Perfil = () => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
 
+    // Pedimos los datos del perfil al cargar el componente
     useEffect(() => {
-        const fetchProfile = async () => {
-            const token = localStorage.getItem('auth_token');
-            if (!token) return; 
-
-            try {
-                const response = await axios.get('http://127.0.0.1:8000/api/profile', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+        authService.getProfile()
+            .then(response => {
                 setUser(response.data);
-            } catch (err) {
-                setError('No se pudo cargar la información del perfil.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchProfile();
+            })
+            .catch(err => {
+                setError('Error al cargar el perfil.');
+                console.error(err);
+            });
     }, []);
 
-    if (loading) return <div style={{ padding: '40px' }}>Cargando perfil...</div>;
-    if (error) return <div style={{ padding: '40px', color: 'red' }}>{error}</div>;
+    // Esta función se activa cuando el usuario elige un archivo
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    // Obtenemos la inicial del nombre para mostrarla en el avatar
-    const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
+        // Limpiamos mensajes
+        setError('');
+        setMessage('Subiendo foto...');
+
+        // 1. Creamos el FormData
+        const formData = new FormData();
+        formData.append('avatar', file); // 'avatar' debe coincidir con el backend
+
+        // 2. Llamamos al servicio
+        authService.uploadAvatar(formData)
+            .then(response => {
+                // 3. Actualizamos el usuario en el estado con los nuevos datos
+                setUser(response.data.user); 
+                setMessage(response.data.message);
+            })
+            .catch(err => {
+                console.error(err);
+                setMessage('');
+                if (err.response && err.response.data) {
+                    setError('Error: ' + Object.values(err.response.data).flat().join(' '));
+                } else {
+                    setError('Error al subir la imagen.');
+                }
+            });
+    };
+
+    // Esta función "simula" un clic en el input oculto
+    const handleAvatarClick = () => {
+        document.getElementById('avatarInput').click();
+    };
+
+    // Si todavía está cargando, mostramos un mensaje
+    if (!user) {
+        return <div>Cargando perfil...</div>;
+    }
+
+    // URL base de tu backend (para armar la URL de la foto)
+    const API_BASE_URL = 'http://127.0.0.1:8000';
+    const avatarSrc = user.avatar_url 
+                        ? `${API_BASE_URL}${user.avatar_url}` 
+                        : `https://ui-avatars.com/api/?name=${user.nombre}+${user.apellido}&background=random`; // Avatar por defecto
 
     return (
-        <div>
-            <h2 style={styles.title}>Mi Perfil</h2>
-            <div style={styles.card}>
-                <div style={styles.profileHeader}>
-                    <div style={styles.avatar}>{userInitial}</div>
-                    <div style={styles.userInfo}>
-                        <p style={styles.userName}>{user?.name}</p>
-                        <p style={styles.userEmail}>{user?.email}</p>
-                    </div>
-                </div>
+        <div className="perfil-container">
+            <h2>Mi Perfil</h2>
+            
+            {error && <div className="error-message">{error}</div>}
+            {message && <div className="success-message">{message}</div>}
 
-                <div>
-                    <h3 style={styles.sectionTitle}>Información de la Cuenta</h3>
-                    <div style={styles.infoRow}>
+            <div className="perfil-card">
+                
+                {/* --- SECCIÓN DE AVATAR --- */}
+                <div className="avatar-section">
+                    <img 
+                        src={avatarSrc} 
+                        alt="Avatar" 
+                        className="avatar-img"
+                        onClick={handleAvatarClick}
+                        title="Haz clic para cambiar la foto"
+                    />
+                    {/* Input de tipo 'file' oculto */}
+                    <input 
+                        type="file" 
+                        id="avatarInput"
+                        style={{ display: 'none' }} 
+                        onChange={handleFileChange}
+                        accept="image/png, image/jpeg, image/jpg"
+                    />
+                </div>
+                {/* --- FIN AVATAR --- */}
+                
+                <h3>{user.nombre} {user.apellido}</h3>
+                <p className="email-text">{user.email}</p>
+
+                <hr />
+
+                <div className="info-section">
+                    <h4>Información de la Cuenta</h4>
+                    <div className="info-item">
                         <span>Nombre de usuario:</span>
-                        <strong>{user?.name}</strong>
+                        <span>{user.nombre} {user.apellido}</span>
                     </div>
-                    <div style={styles.infoRow}>
+                    <div className="info-item">
                         <span>Email verificado:</span>
-                        {/* A futuro, esto puede venir del backend */}
-                        <strong>{user?.email_verified_at ? 'Sí' : 'No'}</strong>
+                        <span>{user.email_verified_at ? 'Sí' : 'No'}</span>
                     </div>
-                    <div style={styles.infoRow}>
+                    <div className="info-item">
+                        <span>DNI:</span>
+                        <span>{user.dni}</span>
+                    </div>
+                    <div className="info-item">
+                        <span>Teléfono:</span>
+                        <span>{user.telefono}</span>
+                    </div>
+                    <div className="info-item">
                         <span>Miembro desde:</span>
-                        <strong>{new Date(user?.created_at).toLocaleDateString('es-ES')}</strong>
+                        <span>{new Date(user.created_at).toLocaleDateString()}</span>
                     </div>
                 </div>
             </div>
@@ -129,4 +131,3 @@ const Perfil = () => {
 };
 
 export default Perfil;
-

@@ -1,134 +1,220 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// src/components/Mercado.js
 
-const styles = {
-    title: {
-        fontSize: '28px',
-        fontWeight: 'bold',
-        color: '#1e293b',
-        marginBottom: '30px',
-    },
-    tableContainer: {
-        backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        padding: '20px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-    },
-    table: {
-        width: '100%',
-        borderCollapse: 'collapse', 
-    },
-    th: {
-        textAlign: 'left',
-        padding: '15px 10px',
-        borderBottom: '2px solid #e2e8f0',
-        color: '#64748b',
-        fontSize: '14px',
-        textTransform: 'uppercase',
-    },
-    td: {
-        padding: '15px 10px',
-        borderBottom: '1px solid #f1f5f9',
-    },
-    cryptoInfo: {
-        display: 'flex',
-        alignItems: 'center',
-    },
-    cryptoImage: {
-        width: '32px',
-        height: '32px',
-        marginRight: '15px',
-    },
-    cryptoName: {
-        fontWeight: 'bold',
-        color: '#1e293b',
-    },
-    cryptoSymbol: {
-        color: '#64748b',
-        textTransform: 'uppercase',
-    },
-    price: {
-        fontWeight: '600',
-    },
-    positiveChange: {
-        color: '#10b981', // Verde
-        fontWeight: '600',
-    },
-    negativeChange: {
-        color: '#ef4444', // Rojo
-        fontWeight: '600',
-    },
+import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // Usaremos axios directamente para CoinGecko aquí
+import authService from '../services/authService'; // Para la compra
+import './Mercado.css'; // Crearemos este archivo
+
+// -----------------------------------------------------------------
+// 👇 FUNCIÓN DE AYUDA PARA FORMATO DE NÚMEROS GRANDES (IMPLEMENTADA) 👇
+// -----------------------------------------------------------------
+
+/**
+ * Función de ayuda para formatear números grandes a formato abreviado (ej: 3.09B)
+ */
+const formatLargeNumber = (num) => {
+    if (num >= 1.0e+12) { // Mayor o igual a un billón (Trillion)
+        return (num / 1.0e+12).toFixed(2) + " T";
+    }
+    if (num >= 1.0e+9) { // Mayor o igual a mil millones (Billion)
+        return (num / 1.0e+9).toFixed(2) + " B";
+    }
+    if (num >= 1.0e+6) { // Mayor o igual a un millón (Million)
+        return (num / 1.0e+6).toFixed(2) + " M";
+    }
+    return num.toLocaleString('es-AR', { maximumFractionDigits: 0 });
 };
 
-const Mercado = () => {
-    const [marketData, setMarketData] = useState([]);
-    const [loading, setLoading] = useState(true);
+
+// --- Componente Modal para Comprar ---
+const ModalCompra = ({ crypto, onClose, onCompraExitosa }) => {
+    const [montoArs, setMontoArs] = useState('');
+    const [cantidadCrypto, setCantidadCrypto] = useState(0);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
+    // Calcular cantidad de crypto al escribir el monto en ARS
     useEffect(() => {
-        const fetchMarketData = async () => {
-            const token = localStorage.getItem('auth_token');
-            if (!token) return; 
+        if (montoArs > 0 && crypto && crypto.current_price) {
+            setCantidadCrypto(montoArs / crypto.current_price);
+        } else {
+            setCantidadCrypto(0);
+        }
+    }, [montoArs, crypto]);
 
-            try {
-                const response = await axios.get('http://127.0.0.1:8000/api/crypto/markets', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                setMarketData(response.data);
-            } catch (err) {
-                setError('No se pudo cargar la información del mercado.');
-            } finally {
+    const handleCompra = () => {
+        if (montoArs <= 0) {
+            setError('Ingresa un monto válido en ARS.');
+            return;
+        }
+        setLoading(true);
+        setError('');
+
+        authService.comprarCrypto(crypto.id, montoArs)
+            .then(response => {
                 setLoading(false);
-            }
-        };
+                onCompraExitosa(`¡Compra exitosa! Recibiste ${cantidadCrypto.toFixed(8)} ${crypto.symbol.toUpperCase()}`);
+                onClose(); // Cerrar modal
+            })
+            .catch(err => {
+                setLoading(false);
+                if (err.response && err.response.data) {
+                     // Si es un error de validación (ej. saldo insuficiente)
+                     if (err.response.status === 422) {
+                          setError(Object.values(err.response.data).flat().join(' '));
+                     } else {
+                          setError(err.response.data.message || 'Error al procesar la compra.');
+                     }
+                } else {
+                    setError('Error de conexión al intentar comprar.');
+                }
+            });
+    };
 
-        fetchMarketData();
-    }, []);
-
-    if (loading) return <div style={{ padding: '40px' }}>Cargando datos del mercado...</div>;
-    if (error) return <div style={{ padding: '40px', color: 'red' }}>{error}</div>;
+    if (!crypto) return null;
 
     return (
-        <div>
-            <h2 style={styles.title}>Mercado de Criptomonedas</h2>
-            <div style={styles.tableContainer}>
-                <table style={styles.table}>
-                    <thead>
-                        <tr>
-                            <th style={styles.th}>#</th>
-                            <th style={styles.th}>Nombre</th>
-                            <th style={styles.th}>Precio</th>
-                            <th style={styles.th}>Cambio 24h</th>
-                            <th style={styles.th}>Cap. de Mercado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {marketData.map((crypto, index) => (
-                            <tr key={crypto.id}>
-                                <td style={styles.td}>{index + 1}</td>
-                                <td style={styles.td}>
-                                    <div style={styles.cryptoInfo}>
-                                        <img src={crypto.image} alt={crypto.name} style={styles.cryptoImage} />
-                                        <div>
-                                            <div style={styles.cryptoName}>{crypto.name}</div>
-                                            <div style={styles.cryptoSymbol}>{crypto.symbol}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={{...styles.td, ...styles.price}}>
-                                    ${crypto.current_price.toLocaleString('en-US')}
-                                </td>
-                                <td style={crypto.price_change_percentage_24h >= 0 ? styles.positiveChange : styles.negativeChange}>
-                                    {crypto.price_change_percentage_24h.toFixed(2)}%
-                                </td>
-                                <td style={styles.td}>
-                                    ${crypto.market_cap.toLocaleString('en-US')}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+        <div className="modal-overlay">
+            <div className="modal-content">
+                <h2>Comprar {crypto.name} ({crypto.symbol.toUpperCase()})</h2>
+                {/* CORRECCIÓN 1: Se eliminó el '$' manual para evitar el doble signo */}
+                <p>Precio actual: {crypto.current_price.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })} ARS</p> 
+                
+                {error && <p className="error-message">{error}</p>}
+
+                <div className="form-group">
+                    <label htmlFor="montoArs">Monto a gastar (ARS):</label>
+                    <input 
+                        type="number" 
+                        id="montoArs"
+                        value={montoArs}
+                        onChange={(e) => setMontoArs(parseFloat(e.target.value) || 0)}
+                        min="1"
+                        step="any"
+                        placeholder="Ej: 50000"
+                    />
+                </div>
+
+                <p>Recibirás aprox.: {cantidadCrypto.toFixed(8)} {crypto.symbol.toUpperCase()}</p>
+
+                <div className="modal-actions">
+                    <button onClick={handleCompra} disabled={loading || montoArs <= 0}>
+                        {loading ? 'Procesando...' : 'Confirmar Compra'}
+                    </button>
+                    <button onClick={onClose} disabled={loading} className="cancel-btn">Cancelar</button>
+                </div>
             </div>
+        </div>
+    );
+};
+// --- Fin Modal ---
+
+
+// --- Componente Principal Mercado ---
+const Mercado = () => {
+    const [cryptos, setCryptos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedCrypto, setSelectedCrypto] = useState(null);
+    const [successMessage, setSuccessMessage] = useState('');
+
+    useEffect(() => {
+        // Llamada a CoinGecko para obtener el mercado
+        axios.get('https://api.coingecko.com/api/v3/coins/markets', {
+            params: {
+                vs_currency: 'ars', // Pedimos precios en ARS
+                order: 'market_cap_desc',
+                per_page: 20, // Top 20
+                page: 1,
+                sparkline: false
+            }
+        })
+        .then(response => {
+            setCryptos(response.data);
+            setLoading(false);
+        })
+        .catch(err => {
+            setError('Error al cargar los datos del mercado.');
+            setLoading(false);
+            console.error(err);
+        });
+    }, []);
+
+    const openModal = (crypto) => {
+        setSelectedCrypto(crypto);
+        setModalOpen(true);
+        setSuccessMessage(''); // Limpiar mensaje de éxito previo
+    };
+
+    const closeModal = () => {
+        setModalOpen(false);
+        setSelectedCrypto(null);
+    };
+    
+    const handleCompraExitosa = (message) => {
+         setSuccessMessage(message);
+         // Podríamos recargar los saldos aquí si fuera necesario
+    };
+
+    if (loading) {
+        return <div style={{ padding: '2rem' }}>Cargando mercado...</div>;
+    }
+
+    if (error) {
+        return <div className="error-message" style={{ margin: '2rem' }}>{error}</div>;
+    }
+
+    return (
+        <div className="mercado-container">
+            <h2>Mercado de Criptomonedas (Precios en ARS)</h2>
+
+             {successMessage && <div className="success-message" style={{ marginBottom: '1rem' }}>{successMessage}</div>}
+
+            <table className="crypto-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nombre</th>
+                        <th>Precio (ARS)</th>
+                        <th>Cambio 24h</th>
+                        <th>Cap. Mercado</th> {/* ✅ CORRECCIÓN 2: Se simplificó la abreviatura */}
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {cryptos.map((crypto, index) => (
+                        <tr key={crypto.id}>
+                            <td>{index + 1}</td>
+                            <td>
+                                <img src={crypto.image} alt={crypto.name} width="20" style={{ marginRight: '10px' }}/>
+                                {crypto.name} ({crypto.symbol.toUpperCase()})
+                            </td>
+                            <td>${crypto.current_price.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td style={{ color: crypto.price_change_percentage_24h >= 0 ? 'green' : 'red' }}>
+                                {crypto.price_change_percentage_24h.toFixed(2)}%
+                            </td>
+                            {/* ✅ CORRECCIÓN 3: Se aplica la nueva función de formato para números grandes */}
+                            <td>$ {formatLargeNumber(crypto.market_cap)}</td>
+                            <td>
+                                <button onClick={() => openModal(crypto)} className="buy-btn">
+                                    Comprar
+                                </button>
+                                {/* <button className="sell-btn">Vender</button> */}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+
+            {/* Renderizar el Modal si está abierto */}
+            {modalOpen && selectedCrypto && (
+                <ModalCompra 
+                    crypto={selectedCrypto} 
+                    onClose={closeModal} 
+                    onCompraExitosa={handleCompraExitosa}
+                />
+            )}
         </div>
     );
 };

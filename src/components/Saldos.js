@@ -1,120 +1,104 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+// src/components/Saldos.js
 
-const styles = {
-    content: {
-        padding: '30px',
-        width: '100%',
-    },
-    header: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '30px',
-    },
-    title: {
-        fontSize: '28px',
-        fontWeight: 'bold',
-        color: '#1e293b',
-        margin: 0,
-    },
+import React, { useState, useEffect } from 'react';
+import authService from '../services/authService';
+import './Saldos.css'; // Crearemos este archivo
 
-    card: {
-        backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        padding: '30px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-    },
-    cardTitle: {
-        fontSize: '20px',
-        fontWeight: '600',
-        color: '#64748b', 
-        marginTop: 0,
-        marginBottom: '20px',
-        borderBottom: '1px solid #e2e8f0', 
-        paddingBottom: '15px',
-    },
-    saldosList: {
-        listStyleType: 'none',
-        padding: 0,
-        margin: 0,
-    },
-    saldoItem: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '18px 5px', 
-        borderBottom: '1px solid #f1f5f9', 
-    },
-    moneda: {
-        fontWeight: '600',
-        fontSize: '18px',
-        color: '#334155',
-    },
-    cantidad: {
-        fontSize: '18px',
-        color: '#1e293b',
-        fontVariantNumeric: 'tabular-nums', 
-    }
-};
-
-function Saldos() {
-    const [user, setUser] = useState(null);
+const Saldos = () => {
+    const [saldos, setSaldos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const navigate = useNavigate();
+    const [message, setMessage] = useState('');
+    const [userName, setUserName] = useState('');
 
+    // Función para traer los datos del perfil (que incluye los saldos)
+    const fetchDatos = () => {
+        setLoading(true);
+        authService.getProfile()
+            .then(response => {
+                setSaldos(response.data.saldos || []);
+                setUserName(response.data.nombre); // Guardamos el nombre para saludar
+                setLoading(false);
+            })
+            .catch(err => {
+                setError('Error al cargar los saldos. Intenta recargar la página.');
+                setLoading(false);
+            });
+    };
+
+    // Cargar saldos al inicio
     useEffect(() => {
-        const fetchProfile = async () => {
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
-                setError('No estás autenticado.');
-                setTimeout(() => navigate('/login'), 1500);
-                setLoading(false);
-                return;
-            }
-            try {
-                const response = await axios.get('http://127.0.0.1:8000/api/profile', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                setUser(response.data);
-            } catch (err) {
-                setError('Hubo un error al cargar tu perfil.');
-                localStorage.removeItem('auth_token');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProfile();
-    }, [navigate]);
+        fetchDatos();
+    }, []);
 
-    if (loading) return <div style={{padding: '40px'}}>Cargando perfil...</div>;
-    if (error) return <div style={{padding: '40px', color: 'red' }}>{error}</div>;
+    // Función del botón
+    const handleCargarSaldo = () => {
+        setError('');
+        setMessage('Cargando saldo...');
+        
+        authService.cargarSaldoSimulado()
+            .then(response => {
+                setMessage(response.data.message);
+                fetchDatos(); // Volvemos a pedir los datos para actualizar la lista
+            })
+            .catch(err => {
+                if (err.response && err.response.data) {
+                    setError(err.response.data.message);
+                } else {
+                    setError('Error al cargar el saldo.');
+                }
+                setMessage('');
+            });
+    };
+
+    if (loading) {
+        return <div style={{ padding: '2rem' }}>Cargando saldos...</div>;
+    }
 
     return (
-        <div style={styles.content}>
-            <header style={styles.header}>
-                <h2 style={styles.title}>¡Hola, {user?.name}!</h2>
-            </header>
+        <div className="saldos-container">
+            <h2>¡Hola {userName}! Este es tu resumen de saldos</h2>
 
-            <div style={styles.card}>
-                <h3 style={styles.cardTitle}>Resumen de Saldos</h3>
-                {user?.saldos && user.saldos.length > 0 ? (
-                    <ul style={styles.saldosList}>
-                        {user.saldos.map((saldo, index) => (
-                            <li key={saldo.id} style={{...styles.saldoItem, borderBottom: index === user.saldos.length - 1 ? 'none' : '1px solid #f1f5f9' }}>
-                                <span style={styles.moneda}>{saldo.moneda}</span>
-                                <span style={styles.cantidad}>{parseFloat(saldo.cantidad).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</span>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p>Aún no tienes saldos registrados.</p>
-                )}
+            {/* Mensajes de feedback */}
+            {error && <div className="error-message">{error}</div>}
+            {message && <div className="success-message">{message}</div>}
+
+            <div className="saldos-card">
+                <div className="saldos-list">
+                    {saldos.length > 0 ? (
+                        saldos.map(saldo => (
+                            <div key={saldo.id} className="saldo-item">
+                                <span className="moneda">{saldo.moneda}</span>
+                                {/* Damos formato de moneda al número */}
+                                <span className="cantidad">
+                                    {parseFloat(saldo.cantidad).toLocaleString('es-AR', { 
+                                        style: 'currency', 
+                                        currency: saldo.moneda,
+                                        minimumFractionDigits: 2 
+                                    })}
+                                </span>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="saldo-item-empty">
+                            <p>No tenés saldos disponibles.</p>
+                            <p>¡Cargá tu saldo de prueba para empezar!</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Botón para cargar saldo */}
+                <button 
+                    onClick={handleCargarSaldo} 
+                    className="cargar-saldo-btn"
+                    // Deshabilitamos el botón si ya tiene saldo en ARS
+                    enable={saldos.some(s => s.moneda === 'ARS')} 
+                >
+                    Cargar $1,000,000 ARS (Prueba)
+                </button>
             </div>
         </div>
     );
-}
+};
 
 export default Saldos;
