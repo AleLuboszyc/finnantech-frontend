@@ -1,7 +1,6 @@
 import React from 'react';
 
-// Creamos un componente reutilizable para nuestro logo.
-// Acepta un 'color' para poder usarlo en diferentes fondos.
+
 const Logo = ({ color = '#ffffff' }) => (
   <svg viewBox="0 0 400 100">
     <g>

@@ -26,10 +26,10 @@ function Login() {
       
       setMessage('¡Login exitoso! Bienvenidos a Finnantech...');
       
-      // ¡CAMBIO AQUÍ! Redirigimos al usuario a la página del dashboard.
+      //Redirigimos al usuario a la página del dashboard.
       setTimeout(() => {
         window.location.href = '/dashboard';
-      }, 1500); // Esperamos 1.5 segundos para que el usuario lea el mensaje.
+      }, 1500);
 
     } catch (error) {
       if (error.response && error.response.status === 422) {

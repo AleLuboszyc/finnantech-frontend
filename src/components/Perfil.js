@@ -1,15 +1,12 @@
-// src/components/Perfil.js
-
 import React, { useState, useEffect } from 'react';
 import authService from '../services/authService';
-import './Perfil.css'; // Crearemos este archivo para los estilos
+import './Perfil.css'; 
 
 const Perfil = () => {
     const [user, setUser] = useState(null);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
-    // Pedimos los datos del perfil al cargar el componente
     useEffect(() => {
         authService.getProfile()
             .then(response => {
@@ -21,23 +18,18 @@ const Perfil = () => {
             });
     }, []);
 
-    // Esta función se activa cuando el usuario elige un archivo
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Limpiamos mensajes
         setError('');
         setMessage('Subiendo foto...');
 
-        // 1. Creamos el FormData
         const formData = new FormData();
-        formData.append('avatar', file); // 'avatar' debe coincidir con el backend
+        formData.append('avatar', file); 
 
-        // 2. Llamamos al servicio
         authService.uploadAvatar(formData)
             .then(response => {
-                // 3. Actualizamos el usuario en el estado con los nuevos datos
                 setUser(response.data.user); 
                 setMessage(response.data.message);
             })
@@ -52,17 +44,14 @@ const Perfil = () => {
             });
     };
 
-    // Esta función "simula" un clic en el input oculto
     const handleAvatarClick = () => {
         document.getElementById('avatarInput').click();
     };
 
-    // Si todavía está cargando, mostramos un mensaje
     if (!user) {
         return <div>Cargando perfil...</div>;
     }
 
-    // URL base de tu backend (para armar la URL de la foto)
     const API_BASE_URL = 'http://127.0.0.1:8000';
     const avatarSrc = user.avatar_url 
                         ? `${API_BASE_URL}${user.avatar_url}` 
@@ -77,7 +66,7 @@ const Perfil = () => {
 
             <div className="perfil-card">
                 
-                {/* --- SECCIÓN DE AVATAR --- */}
+                {}
                 <div className="avatar-section">
                     <img 
                         src={avatarSrc} 
@@ -86,7 +75,7 @@ const Perfil = () => {
                         onClick={handleAvatarClick}
                         title="Haz clic para cambiar la foto"
                     />
-                    {/* Input de tipo 'file' oculto */}
+                    {}
                     <input 
                         type="file" 
                         id="avatarInput"
@@ -95,7 +84,7 @@ const Perfil = () => {
                         accept="image/png, image/jpeg, image/jpg"
                     />
                 </div>
-                {/* --- FIN AVATAR --- */}
+                {}
                 
                 <h3>{user.nombre} {user.apellido}</h3>
                 <p className="email-text">{user.email}</p>

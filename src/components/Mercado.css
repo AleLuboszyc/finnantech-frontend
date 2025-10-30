@@ -1,9 +1,7 @@
-/* src/components/Mercado.css */
-
 .mercado-container {
     max-width: 1200px;
     margin: 2rem auto;
-    padding: 0 1rem; /* Añadimos padding lateral */
+    padding: 0 1rem;
 }
 
 .mercado-container h2 {
@@ -17,17 +15,18 @@
     background: #fff;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
-    overflow: hidden; /* Para que el border-radius se aplique bien */
+    overflow: hidden;
 }
 
 .crypto-table thead {
-    background-color: #f8f9fa; /* Un gris claro para la cabecera */
+    background-color: #f8f9fa;
 }
 
 .crypto-table th, .crypto-table td {
     padding: 1rem;
     text-align: left;
-    border-bottom: 1px solid #dee2e6; /* Líneas separadoras finas */
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle; /* Alinea verticalmente el contenido */
 }
 
 .crypto-table th {
@@ -36,8 +35,24 @@
 }
 
 .crypto-table tbody tr:hover {
-    background-color: #f1f3f5; /* Un gris muy suave al pasar el mouse */
+    background-color: #f1f3f5;
 }
+
+
+
+
+.crypto-table td:nth-child(5), /* Columna "Tu Saldo" */
+.crypto-table td:nth-child(6) { /* Columna "Acciones" */
+    white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+}
+
+/* Y le damos a la columna de acciones el display flex para alinear los botones */
+.crypto-table td:nth-child(6) {
+    display: flex;
+    gap: 0.5rem; /* Espacio entre los botones */
+}
+
+
 
 .buy-btn, .sell-btn {
     padding: 0.4rem 0.8rem;
@@ -46,26 +61,26 @@
     color: white;
     cursor: pointer;
     font-size: 0.9rem;
+    white-space: nowrap; 
     transition: background-color 0.2s;
 }
 
 .buy-btn {
-    background-color: #28a745; /* Verde */
+    background-color: #28a745; 
 }
 .buy-btn:hover {
     background-color: #218838;
 }
 
 .sell-btn {
-    background-color: #dc3545; /* Rojo */
-    margin-left: 0.5rem; /* Separar botones */
+    background-color: #dc3545;
 }
 .sell-btn:hover {
     background-color: #c82333;
 }
 
 
-/* --- Estilos para el Modal --- */
+
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -111,8 +126,8 @@
 .modal-actions {
     margin-top: 2rem;
     display: flex;
-    justify-content: flex-end; /* Botones a la derecha */
-    gap: 1rem; /* Espacio entre botones */
+    justify-content: flex-end;
+    gap: 1rem;
 }
 
 .modal-actions button {
@@ -128,21 +143,20 @@
      cursor: not-allowed;
 }
 
-.modal-actions button:first-child { /* Botón Confirmar */
+.modal-actions button:first-child { 
     background-color: #007bff;
 }
 .modal-actions button:first-child:hover:not(:disabled) {
     background-color: #0056b3;
 }
 
-.modal-actions .cancel-btn { /* Botón Cancelar */
+.modal-actions .cancel-btn { 
     background-color: #6c757d;
 }
 .modal-actions .cancel-btn:hover:not(:disabled) {
     background-color: #5a6268;
 }
 
-/* Reutilizar estilos de mensajes */
 .error-message {
     color: red;
     background: #ffe0e0;

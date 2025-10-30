@@ -1,8 +1,6 @@
-// src/components/Saldos.js
-
 import React, { useState, useEffect } from 'react';
 import authService from '../services/authService';
-import './Saldos.css'; // Crearemos este archivo
+import './Saldos.css';
 
 const Saldos = () => {
     const [saldos, setSaldos] = useState([]);
@@ -11,27 +9,28 @@ const Saldos = () => {
     const [message, setMessage] = useState('');
     const [userName, setUserName] = useState('');
 
-    // Función para traer los datos del perfil (que incluye los saldos)
     const fetchDatos = () => {
         setLoading(true);
+        setError('');
+        setMessage('');
+
         authService.getProfile()
             .then(response => {
                 setSaldos(response.data.saldos || []);
-                setUserName(response.data.nombre); // Guardamos el nombre para saludar
+                setUserName(response.data.nombre);
                 setLoading(false);
             })
             .catch(err => {
                 setError('Error al cargar los saldos. Intenta recargar la página.');
                 setLoading(false);
+                console.error("Error en fetchDatos:", err);
             });
     };
 
-    // Cargar saldos al inicio
     useEffect(() => {
         fetchDatos();
     }, []);
 
-    // Función del botón
     const handleCargarSaldo = () => {
         setError('');
         setMessage('Cargando saldo...');
@@ -39,7 +38,7 @@ const Saldos = () => {
         authService.cargarSaldoSimulado()
             .then(response => {
                 setMessage(response.data.message);
-                fetchDatos(); // Volvemos a pedir los datos para actualizar la lista
+                fetchDatos();
             })
             .catch(err => {
                 if (err.response && err.response.data) {
@@ -59,26 +58,32 @@ const Saldos = () => {
         <div className="saldos-container">
             <h2>¡Hola {userName}! Este es tu resumen de saldos</h2>
 
-            {/* Mensajes de feedback */}
             {error && <div className="error-message">{error}</div>}
             {message && <div className="success-message">{message}</div>}
 
             <div className="saldos-card">
                 <div className="saldos-list">
                     {saldos.length > 0 ? (
-                        saldos.map(saldo => (
-                            <div key={saldo.id} className="saldo-item">
-                                <span className="moneda">{saldo.moneda}</span>
-                                {/* Damos formato de moneda al número */}
-                                <span className="cantidad">
-                                    {parseFloat(saldo.cantidad).toLocaleString('es-AR', { 
-                                        style: 'currency', 
-                                        currency: saldo.moneda,
-                                        minimumFractionDigits: 2 
-                                    })}
-                                </span>
-                            </div>
-                        ))
+                        saldos.map(saldo => {
+                            let cantidadFormateada;
+                            
+                            try {
+                                cantidadFormateada = parseFloat(saldo.cantidad).toLocaleString('es-AR', { 
+                                    style: 'currency', 
+                                    currency: saldo.moneda,
+                                    minimumFractionDigits: 2 
+                                });
+                            } catch (e) {
+                                cantidadFormateada = `${parseFloat(saldo.cantidad).toFixed(8)} ${saldo.moneda}`;
+                            }
+
+                            return (
+                                <div key={saldo.id} className="saldo-item">
+                                    <span className="moneda">{saldo.moneda}</span>
+                                    <span className="cantidad">{cantidadFormateada}</span>
+                                </div>
+                            );
+                        })
                     ) : (
                         <div className="saldo-item-empty">
                             <p>No tenés saldos disponibles.</p>
@@ -86,13 +91,11 @@ const Saldos = () => {
                         </div>
                     )}
                 </div>
-
-                {/* Botón para cargar saldo */}
+                
                 <button 
                     onClick={handleCargarSaldo} 
                     className="cargar-saldo-btn"
-                    // Deshabilitamos el botón si ya tiene saldo en ARS
-                    enable={saldos.some(s => s.moneda === 'ARS')} 
+                    disabled={saldos.some(s => s.moneda === 'ARS' && s.cantidad > 0)} 
                 >
                     Cargar $1,000,000 ARS (Prueba)
                 </button>
